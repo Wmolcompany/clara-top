@@ -1,8 +1,8 @@
-# Clara Zen - Sistema Completo
+# Clara Zen - Sistema Completo com Afiliados
 
-Clara Zen é uma plataforma completa de assistente virtual com IA, sistema de afiliados e painéis administrativos modernos.
+Clara Zen é uma plataforma SaaS completa de assistente virtual com IA, sistema de afiliados avançado, split de pagamentos e painéis administrativos modernos.
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades Implementadas
 
 ### 👤 Para Usuários
 - **Chat com IA**: Conversas inteligentes usando OpenAI GPT
@@ -10,19 +10,43 @@ Clara Zen é uma plataforma completa de assistente virtual com IA, sistema de af
 - **Controle Financeiro**: Gestão de gastos e receitas
 - **Organização de Rotina**: Planejamento de tarefas diárias
 - **Relatórios Inteligentes**: Análises e insights personalizados
+- **Planos Flexíveis**: Free, Premium Mensal e Anual
 
-### 🤝 Para Afiliados
+### 🤝 Sistema de Afiliados Completo
+- **Cadastro de Afiliados**: CPF/CNPJ com escolha CPA ou Recorrência
+- **Sub-afiliados**: Hierarquia de 2 níveis com comissões
 - **Links Personalizados**: Geração automática de links de afiliado
-- **Dashboard Completo**: Estatísticas de cliques e conversões
-- **Sistema de Comissões**: Divisão automática de receitas
-- **Solicitação de Saques**: Processo automatizado de pagamentos
+- **Tracking Avançado**: Cliques, conversões e métricas detalhadas
+- **Comissões Customizáveis**: Taxa por afiliado (% ou valor fixo)
+- **Retenção de 7 dias**: Segurança antes da liberação
+- **Dashboard Completo**: Estatísticas e relatórios em tempo real
 
-### 🔧 Para Administradores
-- **Painel Master**: Controle total do sistema
-- **Gestão de Usuários**: CRUD completo de usuários
-- **Configurações da IA**: Gerenciamento de API keys e prompts
-- **Relatórios Financeiros**: Análise de receitas e comissões
+### 💳 Split de Pagamento
+- **Integração Stripe**: Checkout e webhooks configurados
+- **Divisão Automática**: Comissões calculadas automaticamente
+- **Múltiplos Planos**: Mensal, anual e trial
+- **Gestão de Assinaturas**: Ativação, cancelamento e renovação
+
+### 💰 Sistema de Saques PIX
+- **Cadastro de Chave PIX**: Telefone, e-mail, CPF/CNPJ ou aleatória
+- **Validação de Dados**: Nome da conta vs documento
+- **Aprovação Manual**: Controle total pelo Super Admin
+- **Histórico Completo**: Todas as transações registradas
+
+### 🧑‍💼 Painel Administrativo (Master)
+- **Configurações Gerais**: Stripe, OpenAI, SMTP e parâmetros
+- **CRUD de Usuários**: Gestão completa de usuários
+- **Gestão de Afiliados**: Aprovação e configuração
+- **Controle de Saques**: Aprovação/rejeição manual
+- **Relatórios Avançados**: Receitas, conversões e métricas
 - **Ranking de Afiliados**: Top performers em tempo real
+
+### 🤝 Painel do Afiliado
+- **Dashboard Personalizado**: Status, ganhos e métricas
+- **Links de Indicação**: Geração e compartilhamento
+- **Histórico de Comissões**: Pendentes, disponíveis e pagas
+- **Solicitação de Saque**: Interface simples e segura
+- **Relatórios Detalhados**: Performance e conversões
 
 ## 🛠️ Stack Tecnológica
 
@@ -38,7 +62,8 @@ Clara Zen é uma plataforma completa de assistente virtual com IA, sistema de af
 - **MySQL 8** como banco principal
 - **Redis** para cache e sessões
 - **OpenAI API** para IA
-- **Stripe/Mercado Pago** para pagamentos
+- **Stripe** para pagamentos
+- **Nodemailer** para e-mails
 
 ### Infraestrutura
 - **Docker & Docker Compose**
@@ -77,6 +102,7 @@ chmod +x deploy.sh
 - Frontend: `http://seu-dominio.com`
 - API: `http://seu-dominio.com/api`
 - Docs: `http://seu-dominio.com/api/docs`
+- Admin: `http://seu-dominio.com/admin/dashboard`
 
 ## ⚙️ Configuração Detalhada
 
@@ -94,38 +120,29 @@ JWT_SECRET=sua-chave-jwt-super-secreta
 
 # Stripe (Para pagamentos)
 STRIPE_SECRET_KEY=sk_test_sua_chave
+STRIPE_PUBLISHABLE_KEY=pk_test_sua_chave
 STRIPE_WEBHOOK_SECRET=whsec_seu_webhook
 
 # E-mail (Para notificações)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_USER=seu@email.com
+EMAIL_HOST=smtp.hostinger.com
+EMAIL_PORT=587
+EMAIL_USER=contato@clarazen.com.br
 EMAIL_PASS=sua-senha-app
 ```
 
-### Configuração do Nginx
+### Configuração do Stripe
 
-O arquivo `nginx/site.conf` já está configurado com:
-- Rate limiting
-- Compressão GZIP
-- Headers de segurança
-- Proxy para API e Frontend
-- Cache de arquivos estáticos
+1. **Criar Produtos no Stripe**:
+   - Premium Mensal: R$ 29,90/mês
+   - Premium Anual: R$ 229,90/ano
 
-### SSL/HTTPS
+2. **Configurar Webhooks**:
+   - URL: `https://seu-dominio.com/api/stripe/webhook`
+   - Eventos: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`
 
-Para produção, descomente a seção HTTPS no `nginx/site.conf` e configure certificados:
-
-```bash
-# Instalar Certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Gerar certificado
-sudo certbot --nginx -d seu-dominio.com
-
-# Renovação automática
-sudo crontab -e
-# Adicionar: 0 12 * * * /usr/bin/certbot renew --quiet
-```
+3. **Configurar no Painel Admin**:
+   - Adicionar chaves no painel de configurações
+   - Associar Price IDs aos planos
 
 ## 🔧 Comandos Úteis
 
@@ -159,48 +176,49 @@ docker-compose exec db mysqldump -u root -p clarazen > backup.sql
 docker-compose exec -T db mysql -u root -p clarazen < backup.sql
 ```
 
-### Logs e Monitoramento
+### Liberação de Comissões
 ```bash
-# Logs da API
-docker-compose logs -f api
-
-# Logs do Nginx
-docker-compose logs -f nginx
-
-# Status dos containers
-docker-compose ps
-
-# Uso de recursos
-docker stats
+# Liberar comissões manualmente (executar diariamente)
+curl -X POST http://localhost:4000/api/affiliates/release-commissions
 ```
 
-## 📊 Monitoramento
+## 📊 Sistema de Afiliados
 
-### Portainer (Incluído)
-Acesse `http://seu-dominio.com:9000` para interface gráfica do Docker.
+### Fluxo de Comissões
 
-### Logs Centralizados
-Todos os logs são salvos em:
-- `logs/api/` - Logs da API
-- `logs/nginx/` - Logs do Nginx
+1. **Usuário se cadastra** com código de afiliado
+2. **Usuário assina** um plano premium
+3. **Comissão é calculada** automaticamente
+4. **Retenção de 7 dias** para segurança
+5. **Liberação automática** após período
+6. **Saque disponível** para o afiliado
 
-### Métricas Importantes
-- Uso de CPU/RAM dos containers
-- Latência das requisições
-- Taxa de erro da API
-- Uso do banco de dados
-- Cache hit rate do Redis
+### Tipos de Comissão
+
+- **CPA**: Pagamento único (50% do valor da assinatura)
+- **Recorrente**: Percentual mensal (configurável por afiliado)
+- **Sub-afiliado**: 10% para o nível 2
+
+### Hierarquia de Afiliados
+
+```
+Afiliado Principal (Nível 1)
+├── Comissão: 50% (configurável)
+└── Sub-afiliado (Nível 2)
+    └── Comissão: 10% (fixo)
+```
 
 ## 🔒 Segurança
 
 ### Implementado
+- ✅ Autenticação JWT com 2FA
 - ✅ Rate limiting por IP
 - ✅ Headers de segurança
 - ✅ Validação de entrada
-- ✅ JWT com expiração
 - ✅ Senhas criptografadas
 - ✅ CORS configurado
 - ✅ SQL injection protection
+- ✅ Webhook signature validation
 
 ### Recomendações
 - Use HTTPS em produção
@@ -302,17 +320,29 @@ docker-compose exec api env | grep DATABASE_URL
 docker-compose restart api
 ```
 
-**Frontend não carrega:**
+**Stripe não funciona:**
 ```bash
-# Ver logs do Nginx
-docker-compose logs nginx
+# Verificar configurações
+docker-compose exec api env | grep STRIPE
 
-# Verificar configuração
-docker-compose exec nginx nginx -t
-
-# Reiniciar Nginx
-docker-compose restart nginx
+# Testar webhook
+curl -X POST http://localhost:4000/api/stripe/webhook
 ```
+
+## 📈 Monitoramento
+
+### Métricas Importantes
+- Taxa de conversão de afiliados
+- Churn rate de assinaturas
+- LTV (Lifetime Value) dos usuários
+- Comissões pendentes vs pagas
+- Performance da API (latência)
+
+### Logs Importantes
+- `logs/api/` - Logs da API
+- `logs/nginx/` - Logs do Nginx
+- Stripe Dashboard - Transações
+- OpenAI Usage - Consumo de tokens
 
 ## 📞 Suporte
 
@@ -322,10 +352,20 @@ Para suporte técnico:
 3. Verifique issues no GitHub
 4. Entre em contato com a equipe
 
+## 🎯 Roadmap
+
+- [ ] Integração com Mercado Pago
+- [ ] Webhooks para Hotmart/Kiwify
+- [ ] WhatsApp Business API
+- [ ] App mobile (React Native)
+- [ ] Relatórios avançados com BI
+- [ ] Multi-idiomas
+- [ ] API pública para integrações
+
 ## 📄 Licença
 
 Este projeto é proprietário. Uso restrito conforme acordo de licença.
 
 ---
 
-**Clara Zen** - Sua assistente virtual inteligente 🤖💚
+**Clara Zen** - Sua plataforma SaaS completa com sistema de afiliados! 🤖💚🚀
